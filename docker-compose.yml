@@ -1,0 +1,31 @@
+# Uso local/teste:  docker compose up --build   →  http://localhost:3000
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdv
+      POSTGRES_PASSWORD: pdv_local_pw
+      POSTGRES_DB: pdv_eventos
+    volumes:
+      - pdvdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdv -d pdv_eventos"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://pdv:pdv_local_pw@db:5432/pdv_eventos
+      PORT: "3000"
+      # auto: cookie Secure só quando o acesso for HTTPS.
+      COOKIE_SECURE: auto
+    ports:
+      - "3000:3000"
+volumes:
+  pdvdata:
